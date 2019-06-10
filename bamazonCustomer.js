@@ -1,25 +1,43 @@
 // adding node elements
 var mysql = require('mysql');
 var inquirer = require('inquirer');
+var fs = require('fs');
+
+var password;
+var connection;
+
+fs.readFile('password.txt', function read(err, data) {
+    if (err) {
+        throw err;
+    }
+    password =  data.toString();
+    createInfoToConnect(password)
+});
 
 // create the connection information for the sql database
-var connection = mysql.createConnection({
-    host: "localhost",
+function createInfoToConnect(password) {
+    connection = mysql.createConnection({
+        host: "localhost",
+    
+        port: 3306,
+    
+        user: "root",
+    
+        password: password,
+        database: "bamazon"
+    });
+    connect(connection);
+}
 
-    port: 3306,
-
-    user: "root",
-
-    password: "",
-    database: "bamazon"
-});
 
 // connect to the mysql server and sql database
-connection.connect(function (err) {
-    if (err) throw err;
-    start();
-    connection.end();
-});
+function connect(connection) {
+    connection.connect(function (err) {
+        if (err) throw err;
+        start();
+        connection.end();
+    });
+}
 
 function start() {
     // query the database for all items being auctioned
