@@ -1,4 +1,12 @@
-// adding node elements
+/***********************
+ * UNH Bootcamp
+ * 
+ * @author Jennifer Grace
+ * 
+ * Bamazon Inventory MySQL
+ ***********************/
+
+ // adding node elements
 var mysql = require('mysql');
 var inquirer = require('inquirer');
 var fs = require('fs');
@@ -43,31 +51,32 @@ function start() {
     // query the database for all items being auctioned
     connection.query("SELECT * FROM products", function (err, results) {
         if (err) throw err;
-        // once you have the items, prompt the user for which they'd like to bid on
-        inquirer
-            .prompt([
-                {
-                    name: "choice",
-                    type: "rawlist",
-                    choices: function () {
-                        var choiceArray = [];
-                        for (var i = 0; i < results.length; i++) {
-                            var product = results[i];
-                            choiceArray.push(product.product_name);
-                        }
-                        return choiceArray;
-                    },
-                    message: "What product would you like to buy?"
-                }
-            ])
-            .then(function (answer) {
-                // get the information of the chosen item
-                var chosenItem;
-                for (var i = 0; i < results.length; i++) {
-                    if (results[i].item_name === answer.choice) {
-                        chosenItem = results[i];
-                    }
-                }
-            })
+        // list the information for the items they can purchase
+        for (var i = 0; i < results.length; i++) {
+            var product = results[i];
+            var productInfo = product.id + ") " + product.product_name + ", $" + product.price + "/each";
+            console.log(productInfo);
+        }
+        startPurchase();
+    })
+}
+
+function startPurchase() {
+    inquirer
+    .prompt([
+        {
+            name: "choice",
+            type: "input",
+            message: "Please enter the id of the item you would like to purhcase: ",
+            validate: function notBlankValidation(userInput) {
+                var isValid = (userInput != "" && isNaN(userInput) === false);
+                return isValid || "Please enter the id number of the item you would like to purchase";
+            }
+        }
+    ])
+    .then(function (answer) {
+        // get the information of the chosen item
+
+        
     })
 }
