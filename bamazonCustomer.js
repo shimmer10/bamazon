@@ -1,10 +1,10 @@
-/***********************
+/************************************
  * UNH Bootcamp
  * 
  * @author Jennifer Grace
  * 
- * Bamazon Inventory MySQL
- ***********************/
+ * Bamazon Customer Purchasing MySQL
+ ************************************/
 
 // adding node elements
 var mysql = require('mysql');
