@@ -59,26 +59,38 @@ function start() {
             // get the information of the chosen item
             switch (action_response.action) {
                 case "View Products For Sale":
-                    viewProductsForSale();
+                    displayProducts("all");
+                    break;
+                case "View Low Inventory Items":
+                    displayProducts("low");
                     break;
             }
         })
 }
 
-function viewProductsForSale() {
+function displayProducts(action) {
     connection.query("SELECT * FROM products", function (err, results) {
         if (err) throw err;
-        // display products
+
         var products = [];
-        for (var i = 0; i < results.length; i++) {
-            products.push(
-                {
-                    ID: results[i].id,
-                    Product_Name: results[i].product_name,
-                    Department_Name: results[i].department_name,
-                    Price: results[i].price.toFixed(2),
-                    Quantity_In_Stock: results[i].stock_quantity
-                })
+
+        switch (action) {
+            case "all":
+                // display products
+                for (var i = 0; i < results.length; i++) {
+                    products.push(
+                        {
+                            ID: results[i].id,
+                            Product_Name: results[i].product_name,
+                            Department_Name: results[i].department_name,
+                            Price: results[i].price.toFixed(2),
+                            Quantity_In_Stock: results[i].stock_quantity
+                        })
+                }
+                break;
+            case "low":
+                console.log("in here");
+                break;
         }
         console.table(products);
     })
