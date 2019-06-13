@@ -68,31 +68,38 @@ function start() {
         })
 }
 
-function displayProducts(action) {
+function displayProducts(view) {
     connection.query("SELECT * FROM products", function (err, results) {
         if (err) throw err;
 
-        var products = [];
+        var productsArray = [];
 
-        switch (action) {
+        // display products
+        switch (view) {
             case "all":
-                // display products
                 for (var i = 0; i < results.length; i++) {
-                    products.push(
-                        {
-                            ID: results[i].id,
-                            Product_Name: results[i].product_name,
-                            Department_Name: results[i].department_name,
-                            Price: results[i].price.toFixed(2),
-                            Quantity_In_Stock: results[i].stock_quantity
-                        })
+                    pushProducts(productsArray, results[i]);
                 }
                 break;
             case "low":
-                console.log("in here");
-                break;
+                for (var i = 0; i < results.length; i++) {
+                    if (results[i].stock_quantity <= 5) {
+                        pushProducts(productsArray, results[i]);
+                    }
+                }
         }
-        console.table(products);
+        console.table(productsArray);
     })
     connection.end();
+}
+
+function pushProducts(productsArray, product) {
+    productsArray.push(
+        {
+            ID: product.id,
+            Product_Name: product.product_name,
+            Department_Name: product.department_name,
+            Price: product.price.toFixed(2),
+            Quantity_In_Stock: product.stock_quantity
+        })
 }
