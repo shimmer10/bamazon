@@ -15,6 +15,12 @@ var cTable = require('console.table');
 var password;
 var connection;
 
+var productsArray = [];
+
+var all = "View Products For Sale";
+var low =  "View Low Inventory Items";
+var add = "Add to Inventory"
+
 fs.readFile('password.txt', function read(err, data) {
     if (err) {
         throw err;
@@ -52,43 +58,42 @@ function start() {
         {
             name: "action",
             type: "rawlist",
-            choices: ["View Products For Sale", "View Low Inventory Items", "Add to Inventory", "Add New Product"],
+            choices: [all, low, add, "Add New Product"],
         },
     ])
         .then(function (action_response) {
-            // get the information of the chosen item
-            switch (action_response.action) {
-                case "View Products For Sale":
-                    displayProducts("all");
-                    break;
-                case "View Low Inventory Items":
-                    displayProducts("low");
-                    break;
-            }
+            console.log(action_response.action);
+            buildProductsArray(action_response.action);
         })
 }
 
-function displayProducts(view) {
+function buildProductsArray(view) {
     connection.query("SELECT * FROM products", function (err, results) {
         if (err) throw err;
 
-        var productsArray = [];
-
         // display products
         switch (view) {
-            case "all":
+            case all:
+            case add:
                 for (var i = 0; i < results.length; i++) {
                     pushProducts(productsArray, results[i]);
                 }
+                if (view === all) {
+                    console.table(productsArray)
+                }
+                else {
+                    console.log("in here");
+                }
                 break;
-            case "low":
+            case low:
                 for (var i = 0; i < results.length; i++) {
                     if (results[i].stock_quantity <= 5) {
                         pushProducts(productsArray, results[i]);
                     }
                 }
+                console.table(productsArray)
+                break;
         }
-        console.table(productsArray);
     })
     connection.end();
 }
@@ -102,4 +107,9 @@ function pushProducts(productsArray, product) {
             Price: product.price.toFixed(2),
             Quantity_In_Stock: product.stock_quantity
         })
+}
+
+function addProducts() {
+
+    connection.end();
 }
