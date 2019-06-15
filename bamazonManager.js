@@ -10,17 +10,21 @@
 var mysql = require('mysql');
 var inquirer = require('inquirer');
 var fs = require('fs');
-var cTable = require('console.table');
+require('console.table');
 
+// needed variables
 var password;
 var connection;
+var productsArray;
 
-var productsArray = [];
-
+// menu options
 var all = "View Products For Sale";
-var low =  "View Low Inventory Items";
-var add = "Add to Inventory"
+var low = "View Low Inventory Items";
+var add = "Add to Inventory";
+var newProduct = "Add New Product";
+var exit = "Exit";
 
+// read the file for the password
 fs.readFile('password.txt', function read(err, data) {
     if (err) {
         throw err;
@@ -53,52 +57,59 @@ function connect(connection) {
     });
 }
 
+// start bamazonManager
 function start() {
+    productsArray = [];
     inquirer.prompt([
         {
             name: "action",
             type: "rawlist",
-            choices: [all, low, add, "Add New Product"],
+            choices: [all, low, add, newProduct, exit],
         },
     ])
         .then(function (action_response) {
-            console.log(action_response.action);
-            buildProductsArray(action_response.action);
+            processUserChoice(action_response.action);
         })
 }
 
-function buildProductsArray(view) {
+// take next action based on user input
+function processUserChoice(view) {
     connection.query("SELECT * FROM products", function (err, results) {
         if (err) throw err;
-
-        // display products
         switch (view) {
             case all:
-            case add:
+                clearConsole();
                 for (var i = 0; i < results.length; i++) {
-                    pushProducts(productsArray, results[i]);
+                    buildProductsArray(productsArray, results[i])
                 }
-                if (view === all) {
-                    console.table(productsArray)
-                }
-                else {
-                    console.log("in here");
-                }
+                console.table(productsArray);
+                start();
                 break;
             case low:
+                clearConsole();
                 for (var i = 0; i < results.length; i++) {
                     if (results[i].stock_quantity <= 5) {
-                        pushProducts(productsArray, results[i]);
+                        buildProductsArray(productsArray, results[i]);
                     }
                 }
-                console.table(productsArray)
+                console.table(productsArray);
+                start();
                 break;
+            case add:
+                addInventory(results);
+                break;
+            case newProduct:
+                console.log("new product");
+                connection.end()
+                break;
+            case exit:
+                console.log("Thank you for using Bamazon Manager");
+                connection.end();
         }
     })
-    connection.end();
 }
 
-function pushProducts(productsArray, product) {
+function buildProductsArray(productsArray, product) {
     productsArray.push(
         {
             ID: product.id,
@@ -109,7 +120,58 @@ function pushProducts(productsArray, product) {
         })
 }
 
-function addProducts() {
+function addInventory(results) {
+    inquirer
+        .prompt([
+            {
+                name: "item",
+                type: "rawlist",
+                choices: function () {
+                    var choiceArray = [];
+                    for (var i = 0; i < results.length; i++) {
+                        choiceArray.push(results[i].product_name);
+                    }
+                    return choiceArray;
+                },
+                message: "What item would you like to add stock to?"
+            },
+            {
+                name: "count",
+                type: "input",
+                message: "How many should be added to stock?"
+            }
+        ])
+        .then(function (answer) {
+            updateTable(results, answer.item, answer.count);
+        });
+}
 
-    connection.end();
+function updateTable(results, item, count) {
+    var chosenItem;
+    for (var i = 0; i < results.length; i++) {
+        if (results[i].product_name === item) {
+            chosenItem = results[i];
+        }
+    }
+    var newCount = parseInt(count) + parseInt(chosenItem.stock_quantity);
+    connection.query(
+        "UPDATE products SET ? WHERE ?",
+        [
+            {
+                stock_quantity: newCount
+            },
+            {
+                id: chosenItem.id
+            }
+        ],
+        function (error) {
+            if (error) throw error;
+            console.log("Item number " + chosenItem.id + " updated from quantity " + chosenItem.stock_quantity + " to " + newCount);
+            start();
+        }
+    );
+}
+
+function clearConsole() {
+    process.stdout.write('\x1B[2J\x1B[0f');
 }
