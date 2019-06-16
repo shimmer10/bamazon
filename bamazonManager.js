@@ -99,8 +99,7 @@ function processUserChoice(view) {
                 addInventory(results);
                 break;
             case newProduct:
-                console.log("new product");
-                connection.end()
+                addNewProduct()
                 break;
             case exit:
                 console.log("Thank you for using Bamazon Manager");
@@ -138,7 +137,11 @@ function addInventory(results) {
             {
                 name: "count",
                 type: "input",
-                message: "How many should be added to stock?"
+                message: "How many should be added to stock?",
+                validate: function notBlankValidation(userInput) {
+                    var isValid = (userInput != "" && isNaN(userInput) === false);
+                    return isValid || "Please enter the number being added to stock";
+                }
             }
         ])
         .then(function (answer) {
@@ -166,10 +169,67 @@ function updateTable(results, item, count) {
         ],
         function (error) {
             if (error) throw error;
-            console.log("Item number " + chosenItem.id + " updated from quantity " + chosenItem.stock_quantity + " to " + newCount);
+            console.log(chosenItem.product_name + " stock updated from " + chosenItem.stock_quantity + " to " + newCount);
             start();
         }
     );
+}
+
+function addNewProduct() {
+    inquirer
+        .prompt([
+            {
+                name: "new_item",
+                type: "input",
+                message: "What is the product name?",
+                validate: function notBlankValidation(userInput) {
+                    var isValid = (userInput != "");
+                    return isValid || "Please enter the name of the product being added";
+                }
+            },
+            {
+                name: "category",
+                type: "input",
+                message: "What department is it in?",
+                validate: function notBlankValidation(userInput) {
+                    var isValid = (userInput != "");
+                    return isValid || "Please enter the name of the department it is in";
+                }
+            },
+            {
+                name: "price",
+                type: "input",
+                message: "How much does it cost per unit?",
+                validate: function notBlankValidation(userInput) {
+                    var isValid = (userInput != "" && isNaN(userInput) === false);
+                    return isValid || "Please enter the cost of the item per unit";
+                }
+            },
+            {
+                name: "stock",
+                type: "input",
+                message: "How many are being added?",
+                validate: function notBlankValidation(userInput) {
+                    var isValid = (userInput != "" && isNaN(userInput) === false);
+                    return isValid || "Please enter the number in stock";
+                }
+            }
+        ])
+        .then(function (answer) {
+            connection.query(
+                "INSERT INTO products SET ?",
+                {
+                    product_name: answer.new_item,
+                    department_name: answer.category,
+                    price: answer.price,
+                    stock_quantity: answer.stock || 0
+                },
+                function (err, results) {
+                    if (err) throw err;
+                    console.log(results.affectedRows + " item was added named " + answer.new_item);
+                    start();
+                });
+        });
 }
 
 function clearConsole() {
